@@ -38,7 +38,7 @@ Dependencies are stored in the `requirements.txt` file. Install them into a vend
 
 3. **Configure environment:**
 
-Create a `.env` file in the root directory with the following environment variables:
+This is optional for this project. Create a `.env` file in the root directory with the following environment variables:
 
    ```bash
    FLASK_APP=app.py
@@ -53,7 +53,9 @@ Create a `.env` file in the root directory with the following environment variab
 Run the following command to initialize the database and create the tables:
 
    ```bash
-   make db-init
+   make db-init       # Initializes the database (if not already done)
+   make db-migrate    # Create a new migration
+   make db-upgrade    # Apply the migration to the database
    ```
 
 5. **Run the Flask application:**

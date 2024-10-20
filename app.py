@@ -22,7 +22,7 @@ jwt = JWTManager(app)
 # User Model
 class User(db.Model):
     __tablename__ = 'users'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -37,7 +37,7 @@ class User(db.Model):
         backref='followed',
         lazy=True
     )
-    
+
     following = db.relationship(
         'Follower',
         foreign_keys='Follower.follower_id',
@@ -54,32 +54,32 @@ class User(db.Model):
 # Post Model
 class Post(db.Model):
     __tablename__ = 'posts'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120), nullable=False)
     content = db.Column(db.Text, nullable=False)
     image_url = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
+
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    
+
     comments = db.relationship('Comment', backref='post', lazy=True)
 
 # Comment Model
 class Comment(db.Model):
     __tablename__ = 'comments'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
+
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
 
 # Follower Model (Association Table)
 class Follower(db.Model):
     __tablename__ = 'followers'
-    
+
     follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     follow_date = db.Column(db.DateTime, default=datetime.utcnow)
@@ -116,6 +116,7 @@ def login():
         return jsonify({'message': 'Invalid credentials'}), 401
 
     access_token = create_access_token(identity=user.id)
+
     return jsonify({'access_token': access_token})
 
 # Get user profile (JWT-protected)
@@ -124,6 +125,7 @@ def login():
 def profile():
     user_id = get_jwt_identity()
     user = User.query.get_or_404(user_id)
+
     return jsonify({
         'username': user.username,
         'email': user.email
@@ -138,18 +140,74 @@ def create_post():
     new_post = Post(title=data['title'], content=data['content'], user_id=user_id)
     db.session.add(new_post)
     db.session.commit()
+
     return jsonify({'message': 'Post created'}), 201
 
 @app.route('/posts', methods=['GET'])
 def get_posts():
     posts = Post.query.all()
+
     return jsonify([{
         'title': post.title,
         'content': post.content,
         'author': post.author.username
     } for post in posts])
 
-# More endpoints (update, delete, comments, followers, etc.) can be added similarly
+@app.route('/posts/<int:post_id>/comments', methods=['POST'])
+@jwt_required()
+def create_comment(post_id):
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    content = data.get('content')
+
+    if not content:
+        return jsonify({'msg': 'Content is required'}), 400
+
+    comment = Comment(content=content, user_id=user_id, post_id=post_id)
+    db.session.add(comment)
+    db.session.commit()
+
+    return jsonify({'msg': 'Comment created', 'comment': {'id': comment.id, 'content': comment.content, 'created_at': comment.created_at}}), 201
+
+# Endpoint to get comments for a post
+@app.route('/posts/<int:post_id>/comments', methods=['GET'])
+def get_comments(post_id):
+    comments = Comment.query.filter_by(post_id=post_id).all()
+
+    return jsonify([{'id': comment.id, 'content': comment.content, 'created_at': comment.created_at} for comment in comments]), 200
+
+# Endpoint to follow a user
+@app.route('/follow/<int:user_id>', methods=['POST'])
+@jwt_required()
+def follow_user(user_id):
+    follower_id = get_jwt_identity()
+
+    # Check if the follower is already following the user
+    existing_follow = Follower.query.filter_by(follower_id=follower_id, followed_id=user_id).first()
+    if existing_follow:
+        return jsonify({'msg': 'You are already following this user'}), 400
+
+    follow = Follower(follower_id=follower_id, followed_id=user_id)
+    db.session.add(follow)
+    db.session.commit()
+
+    return jsonify({'msg': 'Successfully followed user'}), 201
+
+# Endpoint to unfollow a user
+@app.route('/unfollow/<int:user_id>', methods=['DELETE'])
+@jwt_required()
+def unfollow_user(user_id):
+    follower_id = get_jwt_identity()
+    
+    # Check if the follower is currently following the user
+    follow = Follower.query.filter_by(follower_id=follower_id, followed_id=user_id).first()
+    if not follow:
+        return jsonify({'msg': 'You are not following this user'}), 400
+
+    db.session.delete(follow)
+    db.session.commit()
+
+    return jsonify({'msg': 'Successfully unfollowed user'}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)

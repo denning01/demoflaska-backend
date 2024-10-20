@@ -8,7 +8,7 @@ VENDOR_DIR := vendor
 # Default target: Run the Flask app
 .PHONY: run
 run: $(VENDOR_DIR)/.installed
-	FLASK_APP=$(FLASK_APP) FLASK_ENV=$(FLASK_ENV) PYTHONPATH=$(VENDOR_DIR) $(PYTHON) -m flask run
+	FLASK_APP=$(FLASK_APP) FLASK_ENV=$(FLASK_ENV) PYTHONPATH=$(VENDOR_DIR) $(PYTHON) -m flask run -p 3002
 
 # Target to install dependencies
 $(VENDOR_DIR)/.installed: requirements.txt
