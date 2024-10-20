@@ -1,0 +1,5 @@
+.direnv/*
+!.direnv/.keep
+vendor/*
+!vendor/.keep
+__pycache__/*
