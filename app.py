@@ -4,9 +4,10 @@ from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-
+from flask_cors import CORS
 app = Flask(__name__)
 
+CORS(app, resources={r"/*": {"origins": "https://demo-flask-app-1kry.onrender.com/"}})
 # Configurations
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Using SQLite for simplicity
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
