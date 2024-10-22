@@ -196,11 +196,20 @@ def create_comment(post_id):
 
 # Endpoint to get comments for a post
 @app.route('/posts/<int:post_id>/comments', methods=['GET'])
-def get_comments(post_id):
-    comments = Comment.query.filter_by(post_id=post_id).all()
+def get_post_comments(post_id):
+    # Query the post to ensure it exists
+    post = Post.query.get_or_404(post_id)
 
-    return jsonify([{'id': comment.id, 'content': comment.content, 'created_at': comment.created_at} for comment in comments]), 200
+    # Query all comments related to the post
+    comments = Comment.query.filter_by(post_id=post.id).all()
 
+    # Return the comments in JSON format
+    return jsonify([{
+        'id': comment.id,
+        'content': comment.content,
+        'author': comment.user.username,  # Assuming 'user' is the backref to User model
+        'created_at': comment.created_at
+    } for comment in comments]), 200
 # Endpoint to follow a user
 @app.route('/follow/<int:user_id>', methods=['POST'])
 @jwt_required()
