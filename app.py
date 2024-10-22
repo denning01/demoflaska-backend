@@ -6,8 +6,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from flask_cors import CORS
 app = Flask(__name__)
-
-CORS(app)
+#adds a reource to enable CORS
+CORS(app,resources={r'/*': {'origins': '*'}})
 # Configurations
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Using SQLite for simplicity
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
