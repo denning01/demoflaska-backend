@@ -164,6 +164,20 @@ def get_posts():
         'author': post.author.username
     } for post in posts])
 
+@app.route('/posts/<int:post_id>', methods=['GET'])
+def get_post(post_id):
+    # Query the post by its ID
+    post = Post.query.get_or_404(post_id)
+
+    # Return the post's details in JSON format
+    return jsonify({
+        'id': post.id,
+        'title': post.title,
+        'content': post.content,
+        'author': post.author.username,
+        'created_at': post.created_at
+    }), 200
+
 @app.route('/posts/<int:post_id>/comments', methods=['POST'])
 @jwt_required()
 def create_comment(post_id):
