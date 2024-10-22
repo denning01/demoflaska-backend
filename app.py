@@ -158,6 +158,7 @@ def get_posts():
     posts = Post.query.all()
 
     return jsonify([{
+        'id': post.id,  # Added post ID
         'title': post.title,
         'content': post.content,
         'author': post.author.username
